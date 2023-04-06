@@ -25,14 +25,17 @@ rule make_sig:
 rule extents:
     input:
         expand("{hashval}.{release}.extents.fa",
-               hashval=HASHES, release=release_map.keys())
+               hashval=HASHES, release=release_map.keys()),
+        "in_2_only.release2.extents.fa",
+        "in_3_only.release3.extents.fa",
 
-rule make_extents:
+
+rule make_extreme_extents:
     input:
         sig="extreme-{hashval}.sig",
         genomes=release_map.values(),   # depend on all three, I guess
     output:
-        "{hashval}.{release}.extents.fa.FOO",
+        "{hashval}.{release}.extents.fa",
     params:
         releasefile = lambda w: release_map[w.release],
     shell: """
@@ -40,8 +43,25 @@ rule make_extents:
             {params.releasefile} {input.sig}
     """
 
+rule make_excluded_extents_1:
+    input:
+        sig='in_2_only.sig',
+        genome=release_map['release2'],
+    output:
+        "in_2_only.release2.extents.fa",
+    shell: """
+        ./extract-max-extent-around-hashes.py -o {output} \
+            {input.genome} {input.sig}
+    """
 
-#for i in 159562607389840577 74457073119032237 81038444938869519
-#do
-#./extract-max-extent-around-hashes.py -o $i.release2.extents c_elegans.PRJEB28388.WS287.genomic.fa.gz {input.sig}
-#done
+
+rule make_excluded_extents_2:
+    input:
+        sig='in_3_only.sig',
+        genome=release_map['release3'],
+    output:
+        "in_3_only.release3.extents.fa",
+    shell: """
+        ./extract-max-extent-around-hashes.py -o {output} \
+            {input.genome} {input.sig}
+    """
